@@ -1,0 +1,51 @@
+# 01. Define the function CalculateKey(s)
+# 02. Initialize U (priority queue) as an empty set
+# 03. Set km = 0
+# 04. Set rhs(s) and g(s) to infinity for all s in the state space
+# 05. Set rhs(s_goal) = 0
+# 06. Insert s_goal into U with key [h(s_start, s_goal); 0]
+
+# 07. Define the function UpdateVertex(u)
+# 08. If g(u) ≠ rhs(u) and u is in U, update U with the new key
+# 09. Else if g(u) ≠ rhs(u) and u is not in U, insert u into U
+# 10. Else if g(u) == rhs(u) and u is in U, remove u from U
+
+# 11. Define ComputeShortestPath() function
+# 12. While U.TopKey() is smaller than CalculateKey(s_start) OR rhs(s_start) > g(s_start):
+# 13. Extract u = U.Top()
+# 14. Store old key k_old = U.TopKey()
+# 15. Compute new key k_new = CalculateKey(u)
+# 16. If k_old < k_new, update U with the new key and continue
+# 17. Else if g(u) > rhs(u), update g(u) to rhs(u) and remove u from U
+# 18. Loop through all predecessors s of u
+# 19. If s is not the goal, update rhs(s) to min(rhs(s), c(s, u) + g(u))
+# 20. Call UpdateVertex(s) to update U
+# 21. Else (if g(u) == rhs(u)), store the old g(u) value
+# 22. Set g(u) = infinity
+# 23. Loop through all predecessors s of u (including u)
+# 24. If rhs(s) was computed from g(u), update rhs(s) to min alternative cost
+# 25. If s is not the goal, update rhs(s) to min cost among successors
+# 26. Call UpdateVertex(s) to update U
+
+# 27. Define Main() function
+# 28. Set s_last = s_start
+# 29. Call Initialize() function to set up the problem
+# 30. Call ComputeShortestPath() to find initial shortest path
+# 31. While s_start is not s_goal:
+# 32. If rhs(s_start) is infinity, there is no known path, return failure
+# 33. Choose the best next state s_start based on minimum cost to successors
+# 34. Move to s_start (simulate agent movement)
+# 35. Scan for changed edge costs in the environment
+# 36. If any edge costs have changed:
+# 37. Update km by adding the heuristic distance from s_last to s_start
+# 38. Update s_last to s_start
+# 39. Loop through all directed edges (u, v) that changed:
+# 40. Store old edge cost cold = c(u, v)
+# 41. Update c(u, v) with the new cost
+# 42. If cold > c(u, v), update rhs(u) with new minimal cost path
+# 43. Else if rhs(u) was derived from old cost, update rhs(u)
+# 44. If u is not the goal, recompute rhs(u) from its successors
+# 45. Call UpdateVertex(u) to update U with new cost
+# 46. Call ComputeShortestPath() again to adjust path planning
+# 47. Repeat until the goal is reached
+# 48. End of algorithm execution
