@@ -1,0 +1,5 @@
+1. Setup basic grid map with shapely
+2. Implement D*lite according to the paper
+3. Implement different maps for testing
+4. Varying terrain cost (water, mud, etc. with random generation)
+5. Implement cooperative path planning
