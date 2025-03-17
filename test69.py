@@ -332,7 +332,7 @@ class Main:
         if original_path is not None and len(original_path) > 1:
             xs = [node.x + 0.5 for node in original_path]
             ys = [node.y + 0.5 for node in original_path]
-            self.ax.plot(xs, ys, linestyle='--', color='red', label="Estimated Path")
+            self.ax.plot(xs, ys, linestyle='--', color='red', label="Original Path")
         # Draw the current path.
         if current_path is not None and len(current_path) > 1:
             xs = [node.x + 0.5 for node in current_path]
@@ -361,7 +361,7 @@ class Main:
 if __name__ == "__main__":
     plt.ion()
     fig, axs = plt.subplots(1, 3, figsize=(18, 6))
-    map_configs = ["maze", "obstacles", "simple"]
+    map_configs = ["maze", "simple", "obstacles"]
 
     for map_name, ax in zip(map_configs, axs):
         visualizer = Main(map_name, ax)
