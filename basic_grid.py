@@ -8,20 +8,21 @@ import time
 # -------------------------------
 # Global Definitions
 # -------------------------------
-GRID_SIZE = 25
-GOAL_POS = (23, 23)
-START_POS = (2, 2)
-FPS = 10
-FRAME_DELAY = 1 / FPS
+GRID_SIZE = 25  # Size of the grid (25x25)
+GOAL_POS = (23, 23)  # Goal position on the grid
+START_POS = (2, 2)  # Starting position on the grid
+FPS = 10  # Frames per second for visualization
+FRAME_DELAY = 1 / FPS  # Delay between frames for visualization
 
+# Define the walls of the grid as polygons
 WALLS = [
-    Polygon([(0, 0), (GRID_SIZE, 0), (GRID_SIZE, 1), (0, 1)]),
-    Polygon([(0, GRID_SIZE - 1), (GRID_SIZE, GRID_SIZE - 1), (GRID_SIZE, GRID_SIZE), (0, GRID_SIZE)]),
-    Polygon([(0, 0), (1, 0), (1, GRID_SIZE), (0, GRID_SIZE)]),
-    Polygon([(GRID_SIZE - 1, 0), (GRID_SIZE, 0), (GRID_SIZE, GRID_SIZE), (GRID_SIZE - 1, GRID_SIZE)])
+    Polygon([(0, 0), (GRID_SIZE, 0), (GRID_SIZE, 1), (0, 1)]),  # Bottom wall
+    Polygon([(0, GRID_SIZE - 1), (GRID_SIZE, GRID_SIZE - 1), (GRID_SIZE, GRID_SIZE), (0, GRID_SIZE)]),  # Top wall
+    Polygon([(0, 0), (1, 0), (1, GRID_SIZE), (0, GRID_SIZE)]),  # Left wall
+    Polygon([(GRID_SIZE - 1, 0), (GRID_SIZE, 0), (GRID_SIZE, GRID_SIZE), (GRID_SIZE - 1, GRID_SIZE)])  # Right wall
 ]
 
-# Obstacles are hidden initially.
+# Obstacle configurations for different maps
 OBS_CONFIGS = {
     "maze": [
         Polygon([(5, 5), (10, 5), (10, 10), (5, 10)]),
@@ -31,7 +32,7 @@ OBS_CONFIGS = {
         Polygon([(20, 17), (24, 17), (24, 18), (20, 18)]),
         Polygon([(15, 15), (20, 15), (20, 20), (15, 20)])
     ],
-    "simple": [],
+    "simple": [],  # No obstacles
     "obstacles": [
         Polygon([(10, 10), (15, 10), (15, 15), (10, 15)]),
         Polygon([(5, 1), (10, 1), (10, 6), (5, 6)])
@@ -39,8 +40,26 @@ OBS_CONFIGS = {
 }
 
 def polygons_to_grid(walls=WALLS, grid_size=GRID_SIZE, obstacles=[]):
+    """
+    Convert polygons (walls and obstacles) to a grid representation.
+    
+    Args:
+        walls (list): List of wall polygons.
+        grid_size (int): Size of the grid.
+        obstacles (list): List of obstacle polygons.
+    
+    Returns:
+        np.ndarray: A grid where 1 represents blocked cells (walls/obstacles) and 0 represents free cells.
+    """
     grid = np.zeros((grid_size, grid_size), dtype=int)
     def mark_polygon(polygon, grid):
+        """
+        Mark cells in the grid that are inside the given polygon as blocked (1).
+        
+        Args:
+            polygon (Polygon): The polygon to mark on the grid.
+            grid (np.ndarray): The grid to mark the polygon on.
+        """
         for x in range(grid_size):
             for y in range(grid_size):
                 pt = Point(x + 0.5, y + 0.5)
@@ -56,6 +75,16 @@ def polygons_to_grid(walls=WALLS, grid_size=GRID_SIZE, obstacles=[]):
 # Node Class
 # -------------------------------
 class Node:
+    """
+    Represents a node in the grid for path planning.
+    
+    Attributes:
+        x (int): X-coordinate of the node.
+        y (int): Y-coordinate of the node.
+        g (float): Cost from start to this node.
+        rhs (float): Right Hand Side value for D* Lite algorithm.
+        key (tuple): Key for priority queue sorting.
+    """
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -75,6 +104,15 @@ class Node:
 # Priority Queue Class
 # -------------------------------
 class PriorityQueue:
+    """
+    A priority queue implementation for managing nodes in the D* Lite algorithm.
+    
+    Attributes:
+        pq (list): The priority queue list.
+        entry_finder (dict): A dictionary to find entries in the priority queue.
+        REMOVED (str): Marker for removed tasks.
+        counter (itertools.count): A counter for unique task IDs.
+    """
     def __init__(self):
         self.pq = []
         self.entry_finder = {}
@@ -114,6 +152,26 @@ class PriorityQueue:
 # DStarLite Class
 # -------------------------------
 class DStarLite:
+    """
+    Implements the D* Lite algorithm for dynamic path planning.
+    
+    Attributes:
+        walls (list): List of wall polygons.
+        obstacles (list): List of obstacle polygons.
+        goal_pos (tuple): Goal position on the grid.
+        start_pos (tuple): Starting position on the grid.
+        k_m (float): Key modifier for D* Lite.
+        U (PriorityQueue): Priority queue for managing nodes.
+        known_grid (np.ndarray): Grid representing known obstacles.
+        actual_grid (np.ndarray): Grid representing actual obstacles.
+        nodes (dict): Dictionary of nodes in the grid.
+        start (Node): Start node.
+        goal (Node): Goal node.
+        robot (Robot): The robot moving on the grid.
+        visualizer (Main): Visualizer for the grid and path.
+        original_path (list): The original planned path.
+        actual_path (list): The actual path traveled by the robot.
+    """
     def __init__(self, start_pos, goal_pos, walls, obs, visualizer=None):
         self.walls = walls
         self.obstacles = obs
@@ -137,6 +195,9 @@ class DStarLite:
         self.actual_path = []  # Track the actual path traveled
 
     def plan(self):
+        """
+        Plan the path from start to goal using the D* Lite algorithm.
+        """
         if self.known_grid[self.start.x, self.start.y] == 1:
             print("Start cell is blocked. No valid path.")
             return
@@ -191,9 +252,28 @@ class DStarLite:
             time.sleep(2)  # Pause to show the final plot before moving to the next map
 
     def heuristic(self, a, b):
+        """
+        Calculate the heuristic distance between two nodes.
+        
+        Args:
+            a (Node): The first node.
+            b (Node): The second node.
+        
+        Returns:
+            float: The heuristic distance between the two nodes.
+        """
         return max(abs(a.x - b.x), abs(a.y - b.y))
     
     def successors(self, s):
+        """
+        Get the successors of a node.
+        
+        Args:
+            s (Node): The node to get successors for.
+        
+        Returns:
+            list: List of successor nodes.
+        """
         neighbors = []
         directions = [(-1, 0), (1, 0), (0, -1), (0, 1),
                       (-1, -1), (-1, 1), (1, -1), (1, 1)]
@@ -204,20 +284,54 @@ class DStarLite:
         return neighbors
     
     def predecessors(self, s):
+        """
+        Get the predecessors of a node.
+        
+        Args:
+            s (Node): The node to get predecessors for.
+        
+        Returns:
+            list: List of predecessor nodes.
+        """
         return self.successors(s)
     
     def cost(self, s, s_prime):
+        """
+        Calculate the cost between two nodes.
+        
+        Args:
+            s (Node): The first node.
+            s_prime (Node): The second node.
+        
+        Returns:
+            float: The cost between the two nodes.
+        """
         if self.known_grid[s_prime.x, s_prime.y] == 1:
             return float('inf')
         return 1
     
     def calculate_key(self, s):
+        """
+        Calculate the key for a node.
+        
+        Args:
+            s (Node): The node to calculate the key for.
+        
+        Returns:
+            tuple: The calculated key.
+        """
         k1 = min(s.g, s.rhs) + self.heuristic(self.start, s) + self.k_m
         k2 = min(s.g, s.rhs)
         s.key = (k1, k2)
         return s.key
     
     def update_vertex(self, u):
+        """
+        Update the vertex in the priority queue.
+        
+        Args:
+            u (Node): The node to update.
+        """
         if u != self.goal:
             u.rhs = min([self.cost(s, u) + s.g for s in self.predecessors(u)] + [float('inf')])
         if u in self.U.entry_finder:
@@ -226,6 +340,9 @@ class DStarLite:
             self.U.insert(u, self.calculate_key(u))
     
     def compute_shortest_path(self):
+        """
+        Compute the shortest path using the D* Lite algorithm.
+        """
         iterations = 0
         max_iterations = 10000
         while ((self.U.top_key() < self.calculate_key(self.start)) or (self.start.rhs != self.start.g)):
@@ -255,6 +372,12 @@ class DStarLite:
                     self.update_vertex(s)
     
     def get_path(self):
+        """
+        Get the current planned path from start to goal.
+        
+        Returns:
+            list: List of nodes representing the path.
+        """
         path = []
         current = self.start
         path.append(current)
@@ -273,6 +396,15 @@ class DStarLite:
         return path
 
     def scan_for_changes(self, current):
+        """
+        Scan for changes in the grid (e.g., newly discovered obstacles).
+        
+        Args:
+            current (Node): The current node of the robot.
+        
+        Returns:
+            set: Set of nodes that have changed.
+        """
         changed_vertices = set()
         for neighbor in self.successors(current):
             if self.known_grid[neighbor.x, neighbor.y] == 0 and self.actual_grid[neighbor.x, neighbor.y] == 1:
@@ -285,15 +417,39 @@ class DStarLite:
 # Robot Class
 # -------------------------------
 class Robot:
+    """
+    Represents the robot moving on the grid.
+    
+    Attributes:
+        x (int): X-coordinate of the robot.
+        y (int): Y-coordinate of the robot.
+    """
     def __init__(self, pos):
         self.x, self.y = pos
     def move(self, new_node):
+        """
+        Move the robot to a new node.
+        
+        Args:
+            new_node (Node): The node to move the robot to.
+        """
         self.x, self.y = new_node.x, new_node.y
 
 # -------------------------------
 # Main Visualization Class
 # -------------------------------
 class Main:
+    """
+    Handles the visualization of the grid, robot, and paths.
+    
+    Attributes:
+        walls (list): List of wall polygons.
+        obs (list): List of obstacle polygons.
+        goal_pos (tuple): Goal position on the grid.
+        start_pos (tuple): Starting position on the grid.
+        wall_grid (np.ndarray): Grid representing walls.
+        ax (matplotlib.axes.Axes): The axes for plotting.
+    """
     def __init__(self, map_name="maze", ax=None):
         self.walls = WALLS
         self.obs = OBS_CONFIGS.get(map_name, OBS_CONFIGS["maze"])
@@ -307,6 +463,16 @@ class Main:
         self.update_plot(Robot(self.start_pos))
         
     def update_plot(self, robot, original_path=None, current_path=None, known_grid=None, actual_path=None):
+        """
+        Update the plot with the current state of the grid, robot, and paths.
+        
+        Args:
+            robot (Robot): The robot to plot.
+            original_path (list): The original planned path.
+            current_path (list): The current planned path.
+            known_grid (np.ndarray): The grid representing known obstacles.
+            actual_path (list): The actual path traveled by the robot.
+        """
         self.ax.clear()
         # Draw grid lines.
         for i in range(GRID_SIZE):
